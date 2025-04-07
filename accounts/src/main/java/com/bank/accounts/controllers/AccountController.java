@@ -1,9 +1,11 @@
 package com.bank.accounts.controllers;
 
 import com.bank.accounts.dto.AccountDto;
-import com.bank.accounts.dto.ResponseDto;
 import com.bank.accounts.services.AccountService;
+import com.bank.accounts.utils.response.APIResponse;
+import com.bank.accounts.utils.response.ResponseDto;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,24 +22,13 @@ public class AccountController {
 
     @PostMapping(path = "/create", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<ResponseDto> createAccount(@RequestBody AccountDto accountsDto) {
-        ResponseDto responseDto = null;
         try {
-            responseDto = ResponseDto.builder()
-                    .message("Account created successfully")
-                    .statusCode("200")
-                    .data(accountService.createAccount(accountsDto)) // Explicit cast
-                    .build();
-        } catch (NullPointerException e) {
-            responseDto = ResponseDto.builder()
-                    .message("Account object is null")
-                    .statusCode("400")
-                    .build();
+            AccountDto createdAccount = accountService.createAccount(accountsDto);
+            return APIResponse.buildResponse(HttpStatus.CREATED, "Account created successfully", createdAccount);
+        } catch (IllegalArgumentException e) {
+            return APIResponse.buildErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
-            responseDto = ResponseDto.builder()
-                    .message("Something went wrong")
-                    .statusCode("500")
-                    .build();
+            return APIResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create account: " + e.getMessage());
         }
-        return ResponseEntity.ok(responseDto);
     }
 }
